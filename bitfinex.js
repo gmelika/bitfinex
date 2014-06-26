@@ -64,7 +64,7 @@ module.exports = Bitfinex = (function() {
         });
       }
       if (result.message != null) {
-        return cb(new Error(result.message));
+        return cb(new Error(result.message + " - nonce: " + nonce));
       }
       return cb(null, result);
     });
