@@ -5,6 +5,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
 request = require 'request'
 crypto = require 'crypto'
 qs = require 'querystring'
+_ = require 'lodash'
 
 module.exports = class Bitfinex
 
@@ -14,10 +15,27 @@ module.exports = class Bitfinex
     @secret = secret
     @nonce = nonceGenerator
 
-	make_request: (sub_path, params, cb) ->
+  retry: (method,args) ->
+    self = @
+
+    # make sure the callback (and any other fn)
+    # is bound to Bitfinex
+    _.each args, (arg, i) ->
+      if _.isFunction(arg)
+        args[i] = _.bind(arg, self);
+
+    # run the failed method again with the same
+    # arguments after wait
+    setTimeout(
+      -> method.apply(self, args)
+      100
+    );
+
+	make_request: (sub_path, params, cb, counter) ->
     if !@key or !@secret
       return cb(new Error("missing api key or secret"))
 
+    self = @
     path = '/v1/' + sub_path
     url = @url + path
     if @nonce?
@@ -52,7 +70,9 @@ module.exports = class Bitfinex
         return cb(null, { messsage : body.toString() } )
       
       if result.message?
-        return cb new Error(result.message)
+        if counter != 3 && result.message.indexOf("Nonce") != -1
+          return self.retry self.make_request, [sub_path, params, cb, (counter||0)+1]
+        return cb new Error(result.message + " - nonce: " + nonce)
 
       cb null, result
       
@@ -126,7 +146,6 @@ module.exports = class Bitfinex
 			type: type
 			# is_hidden: is_hidden 
 
-		console.log params
 		@make_request('order/new', params, cb)  
 
 	multiple_new_orders: (symbol, amount, price, exchange, side, type, cb) ->
