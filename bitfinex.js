@@ -206,12 +206,14 @@ module.exports = Bitfinex = (function() {
     return this.make_request('positions/', {}, cb);
   };
 
-  Bitfinex.prototype.past_trades = function(symbol, timestamp, limit_trades, cb) {
+  Bitfinex.prototype.past_trades = function(symbol, timestamp, until, limit_trades, reverse, cb) {
     var params;
     params = {
       symbol: symbol,
       timestamp: timestamp,
-      limit_trades: limit_trades
+      limit_trades: limit_trades,
+      until: until,
+      reverse: reverse
     };
     return this.make_request('mytrades', params, cb);
   };

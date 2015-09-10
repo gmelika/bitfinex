@@ -189,12 +189,14 @@ module.exports = class Bitfinex
 
 		@make_request('positions/', {}, cb)  
 
-	past_trades: (symbol, timestamp, limit_trades, cb) ->
+	past_trades: (symbol, timestamp, until_time, limit_trades, reverse, cb) ->
 
 		params = 
 			symbol: symbol
 			timestamp: timestamp
 			limit_trades: limit_trades
+      until: until_time
+      reverse: reverse
 
 		@make_request('mytrades', params, cb)  
 
